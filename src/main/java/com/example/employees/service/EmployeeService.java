@@ -24,47 +24,70 @@ public class EmployeeService {
     }
 
     public List<EmployeeResponse> findAllEmployees() {
-
-        return repository.findAll().stream()
+        LOG.info("Fetching all employees from database");
+        List<EmployeeResponse> employees = repository.findAll().stream()
                 .map(EmployeeMapper::toResponse)
                 .toList();
+        LOG.debug("Total employees found: {}", employees.size());
+        return employees;
     }
 
     public EmployeeResponse findByEmployeeId(Long id) {
-        LOG.info("Employee id{} :", id);
-        Employee  response = repository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Employee not found"));
+        LOG.info("Fetching employee by id={}", id);
+        Employee response = repository.findById(id)
+                .orElseThrow(() -> {
+                    LOG.warn("Employee not found with id={} - findByEmployeeId", id);
+                    return new ResponseStatusException(HttpStatus.NOT_FOUND, "Employee not found");
+                });
         LOG.debug("Fetched employee details: {}", response);
         return EmployeeMapper.toResponse(response);
     }
 
     public Employee saveEmployees(Employee employee) {
+        LOG.info("Attempting to save employee: name={}, email={}, role={}",
+                employee.getName(), employee.getEmail(), employee.getRole());
+
         repository.findByEmail(employee.getEmail()).ifPresent(e -> {
+            LOG.error("Email already exists: {}", employee.getEmail());
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Email already exists");
         });
-        return repository.save(employee);
+
+        Employee saved = repository.save(employee);
+        LOG.info("Employee saved successfully with id={}", saved.getId());
+        LOG.debug("Saved employee full details: {}", saved);
+        return saved;
     }
 
-    public EmployeeResponse updateEmployeeById(Long id, EmployeeRequest data) {
+    public EmployeeResponse updateEmployeeById(Long id, EmployeeRequest request) {
+        LOG.info("Updating employee with id={}", id);
         Employee existing = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Employee not found with id: " + id));
+                .orElseThrow(() -> {
+                    LOG.warn("Employee not found with id={} - updateEmployeeById", id);
+                    return new RuntimeException("Employee not found with id: " + id);
+                });
 
-        existing.setName(data.getName());
-        existing.setEmail(data.getEmail());
-        existing.setRole(data.getRole());
+        LOG.debug("Existing employee before update: {}", existing);
+
+        existing.setName(request.getName());
+        existing.setEmail(request.getEmail());
+        existing.setRole(request.getRole());
 
         Employee updated = repository.save(existing);
-        return EmployeeMapper.toResponse(updated);
+        LOG.info("Employee updated successfully with id={}", updated.getId());
+        LOG.debug("Updated employee details: {}", updated);
 
+        return EmployeeMapper.toResponse(updated);
     }
 
     public void deleteEmployeeById(Long id) {
-        LOG.info("Delete employee id{} :", id);
+        LOG.info("Deleting employee with id={}", id);
         Employee employee = repository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "Employee not found"
-                ));
+                .orElseThrow(() -> {
+                    LOG.warn("Attempted to delete non-existing employee with id={}", id);
+                    return new ResponseStatusException(HttpStatus.NOT_FOUND, "Employee not found");
+                });
 
         repository.delete(employee);
+        LOG.info("Employee deleted successfully with id={}", id);
     }
 }

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration scan="true">
+
+    <!-- Pick application name from Spring Boot -->
+    <springProperty scope="context" name="appName" source="spring.application.name"/>
+
+    <!-- Define custom log path and log file -->
+    <property name="LOG_PATH" value="C:/Users/ADMIN/Documents/JavaDebug/logs/local/${appName}"/>
+    <property name="LOG_FILE" value="${LOG_PATH}/ApplicationLogs.log"/>
+
+    <!-- Console appender -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} %-5level [%thread] %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- File appender (no rolling, single log file) -->
+    <appender name="FILE" class="ch.qos.logback.core.FileAppender">
+        <file>${LOG_FILE}</file>
+        <append>true</append>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} %-5level [%thread] %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Log levels -->
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="FILE"/>
+    </root>
+
+    <!-- Optional: custom log levels for Spring or Hibernate -->
+    <logger name="org.springframework" level="INFO"/>
+    <logger name="org.hibernate.SQL" level="DEBUG"/>
+</configuration>

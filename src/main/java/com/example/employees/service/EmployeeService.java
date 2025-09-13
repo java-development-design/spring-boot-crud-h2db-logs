@@ -33,12 +33,13 @@ public class EmployeeService {
     }
 
     public EmployeeResponse findByEmployeeId(Long id) {
-        LOG.info("Fetching employee by id={}", id);
+        LOG.debug("Looking up employee in DB with id={}", id);
         Employee response = repository.findById(id)
                 .orElseThrow(() -> {
                     LOG.warn("Employee not found with id={} - findByEmployeeId", id);
                     return new ResponseStatusException(HttpStatus.NOT_FOUND, "Employee not found");
                 });
+        LOG.info("Fetching employee by id={}", id);
         LOG.debug("Fetched employee details: {}", response);
         return EmployeeMapper.toResponse(response);
     }
